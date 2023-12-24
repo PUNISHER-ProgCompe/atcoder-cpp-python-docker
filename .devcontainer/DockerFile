@@ -1,0 +1,57 @@
+# Ubuntuの公式コンテナを軸に環境構築
+# 22.04ではaptからpython3.8が入っていなかったので20.04で固定する
+FROM ubuntu:22.04
+
+# タイムゾーンを日本に設定
+ENV TZ=Asia/Tokyo
+
+SHELL ["/bin/bash", "-c"]
+ENV HOME /root
+ENV PYENV_ROOT $HOME/.pyenv
+ENV PATH $PYENV_ROOT/bin:$PATH
+ENV PATH $PYENV_ROOT/shims:${PATH}
+
+# インフラを整備
+# C++環境想定
+# pyenv の依存パッケージもここでインストールする。
+# 参照: https://github.com/pyenv/pyenv/wiki
+RUN apt-get update && \
+    apt-get install -y time tree git curl \
+    gcc-12 g++-12 nodejs npm\
+    libssl-dev libffi-dev libncurses5-dev zlib1g \
+    zlib1g-dev libreadline-dev libbz2-dev libsqlite3-dev make
+
+RUN git clone https://github.com/yyuu/pyenv.git $HOME/.pyenv
+RUN echo 'eval "$(pyenv init -)"' >> ~/.bashrc && \
+    eval "$(pyenv init -)"
+
+# pythonインストール
+RUN pyenv install 3.11.4 && pyenv global 3.11.4
+
+# 一般的なコマンドで使えるように設定
+# e.g. python3.8 main.py => python main.py
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 30 && \
+    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 30 && \
+    update-alternatives --install /usr/bin/node node /usr/bin/nodejs 30
+
+RUN pip install numpy==1.24.1 scipy==1.10.1 scikit-learn==1.2.0 \
+    numba==0.57.0 networkx==3.0 sortedcontainers==2.4.0 \ 
+    bitarray==2.6.2 more-itertools==9.0.0
+
+# C++でAtCoder Library(ACL)を使えるようにする
+RUN git clone https://github.com/atcoder/ac-library.git /lib/ac-library
+ENV CPLUS_INCLUDE_PATH /lib/ac-library
+
+# Pythonでの競技プログラミング用データ構造をインストール
+RUN pip install git+https://github.com/hinamimi/ac-library-python
+
+# コンテスト補助アプリケーションをインストール
+RUN pip install online-judge-tools
+RUN npm install -g atcoder-cli
+
+# エイリアス設定
+COPY ./.alias /root
+RUN cat /root/.alias >> /root/.bashrc
+
+# atcoder-cliの設定を更新
+COPY ./acc_settings/ /root/.config/atcoder-cli-nodejs

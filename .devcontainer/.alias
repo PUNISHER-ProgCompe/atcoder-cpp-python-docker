@@ -1,0 +1,6 @@
+alias reload='source ~/.bashrc'
+
+alias gpp='g++-12 -std=gnu++20 -Wall -Wextra -O2'
+alias cpl='g++-12 -std=gnu++20 -Wall -Wextra -O2 main.cpp'
+alias debug='g++-12 -std=gnu++20 -Wall -Wextra -O2 -D_DEBUG'
+alias dcpl='g++-12 -std=gnu++20 -Wall -Wextra -O2 -D_DEBUG main.cpp'
