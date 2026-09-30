@@ -1,6 +1,11 @@
 alias reload='source ~/.bashrc'
 
-alias gpp='g++-12 -std=gnu++20 -Wall -Wextra -O2'
-alias cpl='g++-12 -std=gnu++20 -Wall -Wextra -O2 main.cpp'
-alias debug='g++-12 -std=gnu++20 -Wall -Wextra -O2 -D_DEBUG'
-alias dcpl='g++-12 -std=gnu++20 -Wall -Wextra -O2 -D_DEBUG main.cpp'
+alias gpp='g++ -std=gnu++23 -Wall -Wextra -O2'
+alias cpl='g++ -std=gnu++23 -Wall -Wextra -O2 main.cpp'
+alias debug='g++ -std=gnu++23 -Wall -Wextra -O2 -D_DEBUG'
+alias dcpl='g++ -std=gnu++23 -Wall -Wextra -O2 -D_DEBUG main.cpp'
+
+# oj のサンプルテスト（cpp: main.cpp、pypy: main.py、py: CPython 3.13）
+alias ojcpp="oj t -c 'g++ -std=gnu++23 -Wall -Wextra -O2 main.cpp -o main && ./main'"
+alias ojpy='oj t -c "pypy3 main.py"'
+alias ojcpy='oj t -c "python3.13 main.py"'

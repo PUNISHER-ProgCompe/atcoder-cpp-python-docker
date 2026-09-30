@@ -4,5 +4,6 @@
 	"default-task-dirname-format": "{tasklabel}",
 	"default-test-dirname-format": "tests",
 	"default-task-choice": "inquire",
-	"default-template": "cpp"
+	"default-template": "cpp-python",
+	"templates": ["cpp-python", "cpp", "python"]
 }

@@ -1,11 +1,12 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/ubuntu
 {
-	"name": "Ubuntu",
+	"name": "AtCoder C++23 / PyPy / CPython",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
 	"build": {
+        "image": "atcoder-cpp-pypy-python:latest",
         // Path is relative to the devcontainer.json file.
-        "dockerfile": "Dockerfile"
+		"dockerfile": "DockerFile"
     },
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
@@ -23,12 +24,13 @@
 			"extensions": [
 				"ms-python.python",
 				"ms-python.black-formatter",
+				"oderwat.indent-rainbow",
 				"ms-vscode.cpptools"
 			],
 			"settings": 
 			{
 				"python.analysis.typeCheckingMode": "basic",
-				"python.defaultInterpreterPath": "~/.pyenv/versions/3.11.4/bin/python",
+				"python.defaultInterpreterPath": "/usr/local/bin/pypy3",
 				"[python]":{
 					"diffEditor.ignoreTrimWhitespace": false,
 					"editor.defaultFormatter": "ms-python.black-formatter",

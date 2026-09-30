@@ -1,57 +1,76 @@
-# Ubuntuの公式コンテナを軸に環境構築
-# 22.04ではaptからpython3.8が入っていなかったので20.04で固定する
-FROM ubuntu:22.04
+# AtCoder 競技プログラミング用の再現可能な開発環境
+FROM ubuntu:26.04
 
-# タイムゾーンを日本に設定
-ENV TZ=Asia/Tokyo
+ENV TZ=Asia/Tokyo \
+    DEBIAN_FRONTEND=noninteractive \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    PYTHONUNBUFFERED=1
 
-SHELL ["/bin/bash", "-c"]
-ENV HOME /root
-ENV PYENV_ROOT $HOME/.pyenv
-ENV PATH $PYENV_ROOT/bin:$PATH
-ENV PATH $PYENV_ROOT/shims:${PATH}
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-# インフラを整備
-# C++環境想定
-# pyenv の依存パッケージもここでインストールする。
-# 参照: https://github.com/pyenv/pyenv/wiki
-RUN apt-get update && \
-    apt-get install -y time tree git curl \
-    gcc-12 g++-12 nodejs npm\
-    libssl-dev libffi-dev libncurses5-dev zlib1g \
-    zlib1g-dev libreadline-dev libbz2-dev libsqlite3-dev make
+# C++ と PyPy のビルド/実行に必要な依存関係
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates curl git time tree build-essential gcc-15 g++-15 \
+    nodejs npm \
+    bzip2 gfortran libopenblas-dev liblapack-dev pkg-config libgeos-dev meson \
+    libffi-dev libncurses5-dev zlib1g zlib1g-dev libreadline-dev libbz2-dev \
+    libsqlite3-dev libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN git clone https://github.com/yyuu/pyenv.git $HOME/.pyenv
-RUN echo 'eval "$(pyenv init -)"' >> ~/.bashrc && \
-    eval "$(pyenv init -)"
+# uv を Python バージョンとパッケージ管理の共通ツールとして導入
+RUN curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh
+ENV UV_TOOL_BIN_DIR=/usr/local/bin
 
-# pythonインストール
-RUN pyenv install 3.11.4 && pyenv global 3.11.4
+# AtCoder の言語定義に合わせた PyPy 3.11-v7.3.20 とライブラリ
+ARG PYPY_VERSION=7.3.20
+RUN curl -fsSLO "https://downloads.python.org/pypy/pypy3.11-v${PYPY_VERSION}-linux64.tar.bz2" \
+    && tar -xjf "pypy3.11-v${PYPY_VERSION}-linux64.tar.bz2" -C /opt \
+    && uv venv --python "/opt/pypy3.11-v${PYPY_VERSION}-linux64/bin/pypy3" /opt/pypy3.11 \
+    && uv pip install --python /opt/pypy3.11/bin/python \
+        numpy==2.3.2 scipy==1.15.3 networkx==3.5 sympy==1.14.0 \
+        sortedcontainers==2.4.0 more-itertools==10.7.0 shapely==2.1.1 \
+        bitarray==3.6.0 PuLP==3.2.2 mpmath==1.3.0 pandas==2.3.1 \
+        z3-solver==4.15.1.0 scikit-learn==1.7.1 cppyy==3.5.0 \
+        acl-cpp-python==0.6.2 \
+        git+https://github.com/not522/ac-library-python@27fdbb71cd0d566bdeb12746db59c9d908c6b5d5 \
+    && ln -s /opt/pypy3.11/bin/python /usr/local/bin/pypy3 \
+    && ln -s /usr/local/bin/pypy3 /usr/local/bin/python \
+    && ln -s /usr/local/bin/pypy3 /usr/local/bin/python3 \
+    && rm -f "pypy3.11-v${PYPY_VERSION}-linux64.tar.bz2"
 
-# 一般的なコマンドで使えるように設定
-# e.g. python3.8 main.py => python main.py
-RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 30 && \
-    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 30 && \
-    update-alternatives --install /usr/bin/node node /usr/bin/nodejs 30
+# CPython 3.13 は uv で導入し、Python パッケージも uv で管理
+RUN uv python install 3.13.7 \
+    && uv venv --python 3.13.7 /opt/cpython-3.13 \
+    && uv pip install --python /opt/cpython-3.13/bin/python \
+        PuLP==3.2.2 acl-cpp-python==0.6.2 bitarray==3.6.1 cppyy==3.5.0 \
+        gmpy2==2.2.1 lightgbm==4.6.0 more-itertools==10.7.0 mpmath==1.3.0 \
+        networkx==3.5 numba==0.61.2 numpy==2.2.6 ortools==9.14.6206 \
+        pandas==2.3.2 polars==1.31.0 scipy==1.16.1 shapely==2.1.1 \
+        sortedcontainers==2.4.0 sympy==1.14.0 z3-solver==4.15.3.0 \
+        git+https://github.com/not522/ac-library-python@27fdbb71cd0d566bdeb12746db59c9d908c6b5d5 \
+    && ln -s /opt/cpython-3.13/bin/python /usr/local/bin/python3.13 \
+    && ln -s /usr/local/bin/python3.13 /usr/local/bin/cpython \
+    && ln -s /usr/local/bin/python3.13 /usr/local/bin/cpython3
 
-RUN pip install numpy==1.24.1 scipy==1.10.1 scikit-learn==1.2.0 \
-    numba==0.57.0 networkx==3.0 sortedcontainers==2.4.0 \ 
-    bitarray==2.6.2 more-itertools==9.0.0
+# C++23 の既定コンパイラを AtCoder の GCC 15.2 系に合わせる
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-15 30 \
+    && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-15 30 \
+    && update-alternatives --install /usr/bin/node node /usr/bin/nodejs 30
 
-# C++でAtCoder Library(ACL)を使えるようにする
-RUN git clone https://github.com/atcoder/ac-library.git /lib/ac-library
-ENV CPLUS_INCLUDE_PATH /lib/ac-library
+# AtCoder Library (C++)
+RUN git clone --depth 1 https://github.com/atcoder/ac-library.git /lib/ac-library
+ENV CPLUS_INCLUDE_PATH=/lib/ac-library
 
-# Pythonでの競技プログラミング用データ構造をインストール
-RUN pip install git+https://github.com/hinamimi/ac-library-python
+# オンラインジャッジ補助ツール
+RUN uv tool install --python /usr/local/bin/python3.13 \
+        git+https://github.com/online-judge-tools/oj.git@v12.0.0 \
+    && uv tool install --python /usr/local/bin/python3.13 aclogin==0.2.1 \
+    && npm install --global atcoder-cli
 
-# コンテスト補助アプリケーションをインストール
-RUN pip install online-judge-tools
-RUN npm install -g atcoder-cli
-
-# エイリアス設定
-COPY ./.alias /root
+# シェルの便利コマンドと acc の設定
+COPY .alias /root/.alias
 RUN cat /root/.alias >> /root/.bashrc
+COPY acc_settings/ /root/.config/atcoder-cli-nodejs/
 
-# atcoder-cliの設定を更新
-COPY ./acc_settings/ /root/.config/atcoder-cli-nodejs
+ENV PYTHONINTMAXSTRDIGITS=0

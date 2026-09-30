@@ -1,36 +1,26 @@
-# atcoder-cpp-python-docker
-atcoderのローカル環境をVSCodeのdevcontainer機能を使ってちゃちゃっと作るためのファイル群
+﻿# AtCoder 競技プログラミング環境
 
-## 使用ツール
-- Docker Desktop for Windows
-- Visual Studio Code (以下VSCode)
+このリポジトリは、PCを替えても同じツールと言語環境をすぐ使えるようにするための開発環境です。DockerとVisual Studio Codeを使い、OSごとの差をコンテナー内に閉じ込めます。
 
-## 環境構築手順
-- Docker Desktop for Windows をインストールします
-    - 参考
-        - https://www.kagoya.jp/howto/cloud/container/dockerdesktop/
-    - Docker Hub のアカウントが必要です
-        - 参考 : https://zenn.dev/seiya0/articles/tech-docker-desktop-for-win-install
+## 初回セットアップ
 
-- VSCode をインストールします
-    - 拡張機能「Remote Development」をインストールします
+1. Docker Desktop（Windows / macOS）または Docker Engine（Linux）をインストールします。
+2. Visual Studio Code と **Dev Containers** 拡張機能をインストールします。
+3. このリポジトリをクローンしてVS Codeで開きます。
+4. コマンドパレットから **Dev Containers: Reopen in Container** を実行します。初回はイメージのビルドに数分かかります。
+5. コンテナーのターミナルで `source ~/.bashrc` を実行するか、ターミナルを開き直すとコマンドエイリアスが使えます。
 
-- このリポジトリをダウンロードして、お好きなフォルダに配置します
+Dockerfileを変更した後は **Dev Containers: Rebuild Container** を実行してください。Codespacesは必須ではありません。
 
-- ダウンロードしたフォルダをVSCodeで開きます
+## 環境
 
-- Ctrl + Shift + P でコマンドパレットを開き、Rebuild and Reopen in containerでコンテナを開く
+- C++23（GCC 15 系、AtCoder Library）
+- PyPy 3.11-v7.3.20（既定の `python` / `python3`）
+- CPython 3.13.7（`python3.13`、uv管理）
+- Pythonパッケージ管理（uv）
+- `oj`（online-judge-tools 公式 v12.0.0）、`acc`（atcoder-cli）、`aclogin`
+- `acc add`でC++ (`main.cpp`) とPython (`main.py`) の両方を既定で生成
 
-## 使用可能なプログラミング言語
-C++, Python
+## コンテスト参加
 
-### 詳細
-atcoderで使える言語セット（参考 : https://img.atcoder.jp/file/language-update/language-list.html ）
-に準拠しています
-
-C++ 23 (gcc 12.2)
-
-Python (CPython 3.11.4)
-
-## 競プロでの使い方
-編集中
+認証、問題取得、サンプルテスト、提出の流れは[コンテスト参加の流れ](docs/contest-workflow.md)を参照してください。
